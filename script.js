@@ -61,7 +61,7 @@ window.onload = function() {
         spinBtn.addEventListener('click', startSpin);
     }
 
-    const hasSpun = localStorage.getItem('stopest_has_spun');
+    const hasSpun = localStorage.getItem('vongquay_lan_1');
     const savedPrize = localStorage.getItem('stopest_user_prize');
 
     if (hasSpun === 'true') {
