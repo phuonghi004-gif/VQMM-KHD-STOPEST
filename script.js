@@ -117,8 +117,8 @@ function startSpin() {
 
     // Tính toán góc quay chính xác ngẫu nhiên theo kim 12h (Mỗi ô = 60 độ)
     const prizeIndex = Math.floor(Math.random() * numSegments);
-    const targetAngleDegree = 270 - (prizeIndex * 60 + 30); 
-    const totalRotation = 1800 + targetAngleDegree; 
+    const targetAngleDegree = 90 - (prizeIndex * 60 + 30); 
+    const totalRotation =  + targetAngleDegree; 
 
     canvas.style.transform = `rotate(${totalRotation}deg)`;
 
