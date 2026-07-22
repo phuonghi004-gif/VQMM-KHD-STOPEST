@@ -1,20 +1,22 @@
-// =========================================================================
-// 1. CẤU HÌNH PHẦN THƯỞNG VÀ VẼ VÒNG QUAY CANVAS (30%, 50%, 100%)
-// =========================================================================
+// Cấu hình 6 ô phần thưởng xen kẽ hai màu Đỏ thẫm và Trắng theo yêu cầu
 const prizes = [
-    { text: "100%", color: "#61bd6d" },
-    { text: "30%",  color: "#ff8e6b" },
-    { text: "50%",  color: "#fcc438" },
-    { text: "30%",  color: "#ff8e6b" },
-    { text: "50%",  color: "#fcc438" }
+    { text: "Giảm 30%", color: "#a30000", textColor: "#ffffff" },
+    { text: "Giảm 50%", color: "#ffffff", textColor: "#a30000" },
+    { text: "Tặng 1 tháng", color: "#a30000", textColor: "#ffffff" },
+    { text: "Giảm 30%", color: "#ffffff", textColor: "#a30000" },
+    { text: "Giảm 50%", color: "#a30000", textColor: "#ffffff" },
+    { text: "Tặng 1 tháng", color: "#ffffff", textColor: "#a30000" }
 ];
 
 const canvas = document.getElementById("wheelCanvas");
 const ctx = canvas.getContext("2d");
 const numSegments = prizes.length;
 const segmentAngle = (2 * Math.PI) / numSegments;
+let isSpinning = false;
 
+// Hàm vẽ vòng quay chuẩn màu
 function drawWheel() {
+    if (!canvas) return;
     const radius = canvas.width / 2;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -22,84 +24,47 @@ function drawWheel() {
         const startAngle = i * segmentAngle;
         const endAngle = startAngle + segmentAngle;
 
+        // Vẽ các ô hình quạt
         ctx.beginPath();
         ctx.moveTo(radius, radius);
-        ctx.arc(radius, radius, radius - 5, startAngle, endAngle);
+        ctx.arc(radius, radius, radius - 2, startAngle, endAngle);
         ctx.fillStyle = prizes[i].color;
         ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#ffffff";
+        
+        // Viền của các ô quay
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#a30000";
         ctx.stroke();
 
+        // Vẽ văn bản chữ phần thưởng
         ctx.save();
         ctx.translate(radius, radius);
-        // Xoay text vào giữa nan quạt
         ctx.rotate(startAngle + segmentAngle / 2);
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-        // Đổi màu chữ xen kẽ cho dễ đọc
-        ctx.fillStyle = prizes[i].color === "#b30000" ? "#ffffff" : "#b30000";
-        ctx.font = "bold 26px 'Segoe UI'";
-        ctx.fillText(prizes[i].text, radius - 35, 0);
+        ctx.fillStyle = prizes[i].textColor;
+        ctx.font = "bold 22px 'Segoe UI'";
+        ctx.fillText(prizes[i].text, radius - 30, 0);
         ctx.restore();
     }
 }
-drawWheel();
 
-let isSpinning = false;
-
-// =========================================================================
-// 2. TỰ ĐỘNG KHÓA VÀ HIỂN THỊ KẾT QUẢ CŨ KHI KHÁCH MỞ LẠI QUA ZALO
-// =========================================================================
 window.onload = function() {
-    // Vẽ lại vòng quay đề phòng canvas chưa kịp tải
     drawWheel();
-
-    // Gắn sự kiện click cho nút bấm tránh lỗi đơ nút
     const spinBtn = document.getElementById('spin-btn');
     if (spinBtn) {
         spinBtn.addEventListener('click', startSpin);
     }
-
-    const hasSpun = localStorage.getItem('vongquay_lan_1');
-    const savedPrize = localStorage.getItem('stopest_user_prize');
-
-    if (hasSpun === 'true') {
-        if (document.getElementById('input-fields')) {
-            document.getElementById('input-fields').style.display = 'none';
-        }
-        if (spinBtn) {
-            spinBtn.disabled = true;
-            spinBtn.innerText = "ĐÃ HẾT LƯỢT QUAY";
-        }
-        if (document.getElementById('status-message')) {
-            document.getElementById('status-message').innerText = "Bạn đã tham gia chương trình này rồi!";
-        }
-        if (document.getElementById('result-text')) {
-            document.getElementById('result-text').innerText = `Bạn nhận được ưu đãi ${savedPrize}`;
-        }
-        if (document.getElementById('result-box')) {
-            document.getElementById('result-box').classList.remove('hidden');
-        }
-    }
 };
 
-// =========================================================================
-// 3. LOGIC XỬ LÝ QUAY VÀ TÍNH TOÁN KẾT QUẢ VÒNG QUAY CỦA 6 Ô
-// =========================================================================
+// Hàm bắt đầu quay và check SĐT chặn
 function startSpin() {
     if (isSpinning) return;
 
-    if (localStorage.getItem('stopest_has_spun') === 'true') {
-        alert("Bạn đã hết lượt quay!");
-        return;
-    }
+    const nameInput = document.getElementById('fullname');
+    const phoneInput = document.getElementById('phone');
 
-    // Đồng bộ chuẩn ID theo form giao diện của bạn
-    const fullnameInput = document.getElementById('fullname') || document.getElementById('nameInput');
-    const phoneInput = document.getElementById('phone') || document.getElementById('phoneInput');
-
-    const fullname = fullnameInput ? fullnameInput.value.trim() : "";
+    const fullname = nameInput ? nameInput.value.trim() : "";
     const phone = phoneInput ? phoneInput.value.trim() : "";
 
     if (!fullname || !phone) {
@@ -107,7 +72,14 @@ function startSpin() {
         return;
     }
     if (!/^\d{9,11}$/.test(phone)) {
-        alert("Số điện thoại không hợp lệ!");
+        alert("Số điện thoại không hợp lệ (Phải từ 9 đến 11 số)!");
+        return;
+    }
+
+    // KHÓA LÓGIC THEO SỐ ĐIỆN THOẠI (Mỗi SĐT chỉ được quay duy nhất 1 lần)
+    let usedPhones = JSON.parse(localStorage.getItem('stopest_used_phones')) || [];
+    if (usedPhones.includes(phone)) {
+        alert("Số điện thoại này đã tham gia quay thưởng trước đó rồi!");
         return;
     }
 
@@ -115,56 +87,56 @@ function startSpin() {
     const spinBtn = document.getElementById('spin-btn');
     if (spinBtn) spinBtn.disabled = true;
 
-    // Tính toán góc quay chính xác ngẫu nhiên theo kim 12h (Mỗi ô = 60 độ)
+    // Chọn ngẫu nhiên 1 ô trúng giải
     const prizeIndex = Math.floor(Math.random() * numSegments);
-    const targetAngleDegree = 90 - (prizeIndex * 60 + 30); 
-    const totalRotation =  + targetAngleDegree; 
+    
+    // Tính toán góc dừng tuyệt đối lệch tâm 12 giờ của hệ Canvas
+    // Kim chỉ nằm ở góc 270 độ. Mỗi ô rộng 60 độ. Tâm ô i là (i * 60) + 30.
+    const targetAngleDegree = 270 - (prizeIndex * 60 + 30);
+    const totalRotation = 2880 + targetAngleDegree; // Quay 8 vòng lớn trước khi dừng
 
     canvas.style.transform = `rotate(${totalRotation}deg)`;
 
     setTimeout(() => {
         const finalPrize = prizes[prizeIndex].text;
         
-        // Cập nhật giao diện
+        // Hiển thị giao diện thắng giải
         if (document.getElementById('result-text')) {
-            document.getElementById('result-text').innerText = `Bạn nhận được ưu đãi ${finalPrize}`;
+            document.getElementById('result-text').innerText = finalPrize;
         }
         if (document.getElementById('result-box')) {
             document.getElementById('result-box').classList.remove('hidden');
         }
-        if (spinBtn) spinBtn.innerText = "ĐÃ HẾT LƯỢT QUAY";
+        if (spinBtn) {
+            spinBtn.innerText = "ĐÃ HẾT LƯỢT QUAY";
+        }
         if (document.getElementById('status-message')) {
-            document.getElementById('status-message').innerText = "Quay thưởng thành công!";
+            document.getElementById('status-message').innerText = "Chúc mừng bạn đã trúng giải!";
         }
         if (document.getElementById('input-fields')) {
             document.getElementById('input-fields').style.display = 'none';
         }
 
-        // Khóa lượt quay
-        localStorage.setItem('stopest_has_spun', 'true');
-        localStorage.setItem('stopest_user_prize', finalPrize);
+        // Lưu Số điện thoại vừa quay thành công vào danh sách đen để chặn
+        usedPhones.push(phone);
+        localStorage.setItem('stopest_used_phones', JSON.stringify(usedPhones));
 
-        // KÍCH HOẠT HÀM GỬI DỮ LIỆU QUA POPUP (Bypass Zalo Webview thành công 100%)
+        // Đẩy thông tin về Google Form của bạn
         sendDataToGoogle(fullname, phone, finalPrize);
 
         isSpinning = false;
     }, 4000); 
 }
 
-// =========================================================================
-// 4. HÀM GỬI DỮ LIỆU QUA POPUP NHỎ ĐỂ KHÔNG BỊ ZALO CHẶN CORS
-// =========================================================================
+// Hàm gửi API ẩn về Google Form tự đóng tab (Khắc phục lỗi Zalo Webview)
 function sendDataToGoogle(name, phone, prize) {
     const baseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSeboYa4TZbA28yF3Tnlf_EVdLgy7tYRNxIIOpLJjYtqJVNIbQ/formResponse";
-    
-    // Ghép tham số đúng định dạng formResponse cùng nút submit ngầm[cite: 1]
     const finalUrl = `${baseUrl}?entry.810076137=${encodeURIComponent(name)}&entry.1928279920=${encodeURIComponent(phone)}&entry.2010302772=${encodeURIComponent(prize)}&submit=Submit`;
 
-    // Mở một tab ẩn để đẩy dữ liệu đi trực tiếp, khắc phục triệt để bộ lọc Zalo[cite: 1]
     const newWindow = window.open(finalUrl, '_blank');
     if (newWindow) {
         setTimeout(() => {
             newWindow.close();
-        }, 500); // Tự động đóng tab sau 0.5 giây khi dữ liệu đã gửi đi thành công[cite: 1]
+        }, 600); 
     }
 }
