@@ -55,11 +55,32 @@ window.onload = function() {
     if (spinBtn) {
         spinBtn.addEventListener('click', startSpin);
     }
+
+    // LỚP BẢO MẬT 1: KIỂM TRA XEM THIẾT BỊ NÀY ĐÃ TỪNG QUAY CHƯA
+    const deviceHasSpun = localStorage.getItem('stopest_device_spun');
+    const savedPrize = localStorage.getItem('stopest_device_prize');
+
+    if (deviceHasSpun === 'true') {
+        if (document.getElementById('input-fields')) document.getElementById('input-fields').style.display = 'none';
+        if (spinBtn) {
+            spinBtn.disabled = true;
+            spinBtn.innerText = "ĐÃ HẾT LƯỢT QUAY";
+        }
+        if (document.getElementById('status-message')) document.getElementById('status-message').innerText = "Thiết bị của bạn đã tham gia chương trình này rồi!";
+        if (document.getElementById('result-text')) document.getElementById('result-text').innerText = savedPrize;
+        if (document.getElementById('result-box')) document.getElementById('result-box').classList.remove('hidden');
+    }
 };
 
-// Hàm bắt đầu quay và check SĐT chặn
+// Hàm bắt đầu quay, check đồng thời SĐT và Thiết bị
 function startSpin() {
     if (isSpinning) return;
+
+    // Kiểm tra lại lớp chặn thiết bị trước khi chạy tiếp
+    if (localStorage.getItem('stopest_device_spun') === 'true') {
+        alert("Thiết bị này đã hết lượt quay!");
+        return;
+    }
 
     const nameInput = document.getElementById('fullname');
     const phoneInput = document.getElementById('phone');
@@ -76,7 +97,7 @@ function startSpin() {
         return;
     }
 
-    // KHÓA LÓGIC THEO SỐ ĐIỆN THOẠI (Mỗi SĐT chỉ được quay duy nhất 1 lần)
+    // LỚP BẢO MẬT 2: KHÓA LOGIC THEO SỐ ĐIỆN THOẠI
     let usedPhones = JSON.parse(localStorage.getItem('stopest_used_phones')) || [];
     if (usedPhones.includes(phone)) {
         alert("Số điện thoại này đã tham gia quay thưởng trước đó rồi!");
@@ -91,7 +112,6 @@ function startSpin() {
     const prizeIndex = Math.floor(Math.random() * numSegments);
     
     // Tính toán góc dừng tuyệt đối lệch tâm 12 giờ của hệ Canvas
-    // Kim chỉ nằm ở góc 270 độ. Mỗi ô rộng 60 độ. Tâm ô i là (i * 60) + 30.
     const targetAngleDegree = 270 - (prizeIndex * 60 + 30);
     const totalRotation = 2880 + targetAngleDegree; // Quay 8 vòng lớn trước khi dừng
 
@@ -117,7 +137,11 @@ function startSpin() {
             document.getElementById('input-fields').style.display = 'none';
         }
 
-        // Lưu Số điện thoại vừa quay thành công vào danh sách đen để chặn
+        // KHOÁ THIẾT BỊ: Lưu trạng thái đã quay của thiết bị này
+        localStorage.setItem('stopest_device_spun', 'true');
+        localStorage.setItem('stopest_device_prize', finalPrize);
+
+        // KHOÁ SĐT: Lưu Số điện thoại vào danh sách đen để chặn trên mọi máy khác
         usedPhones.push(phone);
         localStorage.setItem('stopest_used_phones', JSON.stringify(usedPhones));
 
@@ -128,7 +152,7 @@ function startSpin() {
     }, 4000); 
 }
 
-// Hàm gửi API ẩn về Google Form tự đóng tab (Khắc phục lỗi Zalo Webview)
+// Hàm gửi API ẩn về Google Form tự đóng tab
 function sendDataToGoogle(name, phone, prize) {
     const baseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSeboYa4TZbA28yF3Tnlf_EVdLgy7tYRNxIIOpLJjYtqJVNIbQ/formResponse";
     const finalUrl = `${baseUrl}?entry.810076137=${encodeURIComponent(name)}&entry.1928279920=${encodeURIComponent(phone)}&entry.2010302772=${encodeURIComponent(prize)}&submit=Submit`;
