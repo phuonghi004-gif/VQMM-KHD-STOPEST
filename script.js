@@ -109,7 +109,24 @@ function startSpin() {
     if (spinBtn) spinBtn.disabled = true;
 
     // Chọn ngẫu nhiên 1 ô trúng giải
-    const prizeIndex = Math.floor(Math.random() * numSegments);
+    // BƯỚC 1: Tạo một số ngẫu nhiên từ 1 đến 100 để tính phần trăm
+const randPercent = Math.floor(Math.random() * 100) + 1;
+let prizeIndex;
+
+// BƯỚC 2: Cài đặt tỷ lệ trúng ô "Tặng 1 tháng" là 5% (thay đổi số 5 theo ý bạn)
+if (randPercent <= 5) {
+    prizeIndex = 5; // <--- SỬA SỐ 5 NÀY THÀNH VỊ TRÍ ĐÚNG CỦA Ô "TẶNG 1 THÁNG" (ĐẾM TỪ 0)
+} else {
+    // 95% còn lại sẽ bốc ngẫu nhiên vào các ô khác trừ ô "Tặng 1 tháng" ra
+    const otherPrizes = [];
+    for (let i = 0; i < numSegments; i++) {
+        if (i !== 5) { // <--- CŨNG SỬA SỐ 5 NÀY THÀNH VỊ TRÍ ĐÚNG CỦA Ô "TẶNG 1 THÁNG"
+            otherPrizes.push(i);
+        }
+    }
+    // Chọn ngẫu nhiên 1 ô trong danh sách các ô còn lại
+    prizeIndex = otherPrizes[Math.floor(Math.random() * otherPrizes.length)];
+}
     
     // Tính toán góc dừng tuyệt đối lệch tâm 12 giờ của hệ Canvas
     const targetAngleDegree = 270 - (prizeIndex * 60 + 30);
